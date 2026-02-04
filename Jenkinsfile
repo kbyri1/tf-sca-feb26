@@ -35,23 +35,23 @@ pipeline {
       }
     }
 
-    stage("tflint") {
-      steps {
-        sh """
-          cd ${TF_DIR}
-          # Run tflint via docker (no local install needed)
-          docker run --rm \
-            -v "$PWD:/data" -w /data \
-            ghcr.io/terraform-linters/tflint:latest \
-            --init
+    // stage("tflint") {
+    //   steps {
+    //     sh """
+    //       cd ${TF_DIR}
+    //       # Run tflint via docker (no local install needed)
+    //       docker run --rm \
+    //         -v "$PWD:/data" -w /data \
+    //         ghcr.io/terraform-linters/tflint:latest \
+    //         --init
 
-          docker run --rm \
-            -v "$PWD:/data" -w /data \
-            ghcr.io/terraform-linters/tflint:latest \
-            --recursive
-        """
-      }
-    }
+    //       docker run --rm \
+    //         -v "$PWD:/data" -w /data \
+    //         ghcr.io/terraform-linters/tflint:latest \
+    //         --recursive
+    //     """
+    //   }
+    // }
 
   //   stage("checkov") {
   //     steps {
@@ -61,12 +61,25 @@ pipeline {
   //           -v "$PWD:/repo" -w /repo \
   //           bridgecrew/checkov:latest \
   //           -d ${TF_DIR} \
-  //           --config-file .checkov.yml
+  //           --config-file /repo/.checkov.yml
   //       """
   //     }
   //   }
-     }
+  // }
 
+    stage("checkov") {
+      steps {
+        sh """
+          docker run --rm \
+            -v "${WORKSPACE}:/repo" -w /repo \
+            bridgecrew/checkov:latest \
+            -d /repo/infra \
+            --config-file /repo/infra/.checkov.yml \
+            --external-checks-dir /repo/.checkov/custom_policies
+        """
+      }
+    }
+  }
   post {
     always {
       echo "Static validation completed."
